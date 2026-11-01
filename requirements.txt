@@ -1,0 +1,12 @@
+openai>=1.0
+pymysql
+pyserial
+asyncua
+langgraph
+langchain
+langchain-community
+langchain-text-splitters
+chromadb
+pypdf
+sentence-transformers
+numpy

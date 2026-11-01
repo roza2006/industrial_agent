@@ -1,0 +1,4 @@
+# 开发依赖（运行时不需安装）
+# Development-only dependencies.
+pytest>=8.0
+ruff>=0.6
