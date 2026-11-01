@@ -75,6 +75,26 @@ flowchart LR
 - LLM 说异常但规则引擎没触发，或者反过来，不自动告警，`requires_human=True` 交给人判断。误报的代价比漏报高，宁可多给人看一遍。
 - 任何一个 Agent 抛异常，图直接走到 `END`，记录错误后返回，不影响主循环继续采集。
 
+实际的判断流程这样走（和 `graph.py` 里的路由一致）：
+
+```mermaid
+flowchart TD
+    A[点位跳变 0→1] --> B[DiagnosisAgent<br/>查历史事件 / 联动延迟 / 维修记录<br/>检索知识库]
+    B --> C{LLM 和规则引擎<br/>都判正常?}
+    C -->|是| Z[直接结束<br/>只留 trace，不出报告]
+    C -->|否| D{两者结论一致?}
+    D -->|不一致| E[升级人工<br/>requires_human = True]
+    D -->|一致| F[DecisionAgent<br/>定告警级别]
+    F -->|warning / critical| G[send_alarm<br/>写 alarm_log]
+    F -->|不告警| H[ExplainAgent<br/>生成现场报告]
+    E --> H
+    G --> H
+    H --> I[(写 agent_traces)]
+    Z --> I
+```
+
+"都判正常"那一支是直接结束的，不走决策和解释，所以正常工况下没有报告输出，只有 trace 记录 —— 这也是刚启动时看不到报告的原因之一。
+
 Agent 能调的工具放在 `tools.py`：
 
 - `query_recent_events` 查某点位最近 N 分钟的事件
